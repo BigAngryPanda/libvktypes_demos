@@ -6,3 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+libvktypes = { git = "https://github.com/BigAngryPanda/libvktypes", branch = "main"}
+winit = "*"
+
+[[bin]]
+name = "cube_with_prespective"
+path = "src/cube_with_prespective/main.rs"
