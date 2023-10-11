@@ -284,17 +284,27 @@ fn main() {
     let color_data = data.resource(3, graphics::ResourceType::UNIFORM_BUFFER, graphics::ShaderStage::FRAGMENT);
     let set = [&transformations_data, &color_data];
 
-    let depth_type = memory::ImageCfg {
-        queue_families: &[queue.index()],
-        format: memory::ImageFormat::D32_SFLOAT,
-        extent: capabilities.extent3d(1),
-        usage: memory::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT,
-        layout: graphics::ImageLayout::UNDEFINED,
-        aspect: memory::ImageAspect::DEPTH,
+    let depth_buffer_cfg = [
+        memory::ImageCfg {
+            queue_families: &[queue.index()],
+            simultaneous_access: false,
+            format: memory::ImageFormat::D32_SFLOAT,
+            extent: capabilities.extent3d(1),
+            usage: memory::ImageUsageFlags::DEPTH_STENCIL_ATTACHMENT,
+            layout: graphics::ImageLayout::UNDEFINED,
+            aspect: memory::ImageAspect::DEPTH,
+            tiling: memory::Tiling::OPTIMAL,
+            count: 1
+        }
+    ];
+
+    let alloc_info = memory::ImagesAllocationInfo {
         properties: hw::MemoryProperty::DEVICE_LOCAL,
+        filter: &hw::any,
+        image_cfgs: &depth_buffer_cfg
     };
 
-    let depth_buffer = memory::Image::new(&device, &depth_type).expect("Failed to allocate depth buffer");
+    let depth_buffer = memory::ImageMemory::allocate(&device, &alloc_info).expect("Failed to allocate depth buffer");
 
     let render_pass = graphics::RenderPass::with_depth_buffers(&device, surf_format, memory::ImageFormat::D32_SFLOAT, 1)
         .expect("Failed to create render pass");
@@ -343,7 +353,7 @@ fn main() {
         .map(|image| {
             let frames_cfg = memory::FramebufferCfg {
                 render_pass: &render_pass,
-                images: &[&image, &depth_buffer],
+                images: &[image.view(0), depth_buffer.view(0)],
                 extent: capabilities.extent2d(),
             };
 
